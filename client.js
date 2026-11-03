@@ -31,13 +31,14 @@ window.__ModuleLoader__.load({
 
     const COLUMNS = [
       { id: 'requests', title: '需求', hint: '用户原话 + 验收条件', filter: 'open' },
-      { id: 'queued', title: '待办', hint: '已建任务、还没开始', filter: 'open' },
+      { id: 'queued', title: '待办', hint: '待执行或部分完成、仍需处理', filter: 'open' },
       { id: 'waiting', title: '待确认', hint: '需要你点头才能继续（waiting-user）', filter: 'open' },
-      { id: 'closed', title: '已完成', hint: '有收口记录', filter: 'closed' },
+      { id: 'closed', title: '已完成', hint: '已完成或已取消的任务', filter: 'closed' },
     ];
 
     const STATUS_LABEL = {
       queued: '待办',
+      partial: '部分完成',
       'waiting-user': '待确认',
       succeeded: '已完成',
       cancelled: '已取消',
@@ -51,7 +52,7 @@ window.__ModuleLoader__.load({
       superseded: '已取代',
     };
 
-    /** Which column one task belongs to. Closed wins over its own stored status. */
+    /** The host supplies an effective status shared with the context reader. */
     function taskColumn(task) {
       if (task.closed) return 'closed';
       if (task.status === 'waiting-user') return 'waiting';
@@ -110,9 +111,7 @@ window.__ModuleLoader__.load({
           kind: 'task',
           id: task.id,
           title: shorten(task.title, 90),
-          // A task closed by a completion still carries `queued` in its own
-          // record, so the label follows the column, not the stored status.
-          meta: `${(task.acceptance ?? []).length} 条验收 · ${task.closed ? '已完成' : (STATUS_LABEL[task.status] ?? task.status ?? '待办')}`,
+           meta: `${(task.acceptance ?? []).length} 条验收 · ${STATUS_LABEL[task.status] ?? task.status ?? '待办'}`,
           note: task.risk ? `风险 · ${shorten(task.risk, 64)}` : '',
           feedback: task.latestFeedback ? shorten(task.latestFeedback.rawQuote, 90) : '',
           time: shortTime(task.createdAt),

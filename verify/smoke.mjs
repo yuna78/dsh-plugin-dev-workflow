@@ -135,12 +135,12 @@ try {
   const board = readBoard(dir, {});
   if (board.requests.length !== 1) throw new Error(`board requests = ${board.requests.length}, expected 1`);
   if (board.tasks.length !== 2) throw new Error(`board tasks = ${board.tasks.length}, expected 2`);
-  const closed = board.tasks.find((task) => task.id === task.id && task.closed);
-  if (!closed) throw new Error('completed task must be marked closed');
+   const waiting = board.tasks.find((item) => item.id === task.id);
+   if (waiting.closed || waiting.status !== 'waiting-user') throw new Error('unacknowledged completion must remain waiting-user and open');
   const stillOpen = board.tasks.find((task) => task.id === openTask.id);
   if (stillOpen.closed) throw new Error('queued task must stay open');
   if (stillOpen.completionStatus !== null) throw new Error('open task must not claim a completion');
-  if (board.counts.openTasks !== 1 || board.counts.closedTasks !== 1) {
+   if (board.counts.openTasks !== 2 || board.counts.closedTasks !== 0) {
     throw new Error(`board task counts wrong: ${JSON.stringify(board.counts)}`);
   }
   // Latest-wins: appending a newer record for the same task must not duplicate it.

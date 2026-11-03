@@ -46,6 +46,25 @@ function recordTool(name, description, parameters, execute) {
 function allRecords(ctx, config, exec, file) { return lines(join(storeFor(ctx, config, exec).dir, file)); }
 function latest(records, key) { const map = new Map(); for (const r of records) map.set(r[key], r); return [...map.values()]; }
 
+const TASK_TERMINAL = new Set(['succeeded', 'cancelled']);
+const COMPLETION_STATUSES = new Set(['partial', 'waiting-user', 'succeeded']);
+
+// Last line wins within each log. Explicit terminal task states (including
+// imported/legacy records) remain terminal; otherwise a recognized completion
+// supplies the effective state. Both readers use this unwindowed projection.
+function projectTasks(tasks, completions) {
+  const byTask = new Map();
+  for (const completion of completions) {
+    if (typeof completion?.taskId === 'string') byTask.set(completion.taskId, completion);
+  }
+  return latest(tasks, 'taskId').map((record) => {
+    const storedStatus = record.status ?? 'queued';
+    const completionStatus = byTask.get(record.taskId)?.status ?? null;
+    const status = !TASK_TERMINAL.has(storedStatus) && COMPLETION_STATUSES.has(completionStatus) ? completionStatus : storedStatus;
+    return { ...record, storedStatus, status, completionStatus, closed: TASK_TERMINAL.has(status) };
+  });
+}
+
 // A preset persona is one paragraph at the top of a context that grows to
 // dozens of steps; by the time a turn is forty tool calls in, the model is
 // reading tool results, not that paragraph. The measurement that motivated
@@ -127,18 +146,13 @@ const REQUEST_TERMINAL = new Set(['delivered', 'invalid', 'superseded']);
  * Read one project's records into the shape the board renders.
  *
  * Read-only and additive: nothing here writes, rewrites, or "repairs" a record.
- * A task is closed when its own latest status says so or when a completion
- * exists for it — that is the only place the two files are joined, because
- * `dev_complete` writes to completions.jsonl and never mutates tasks.jsonl.
+ * A completion is an outcome record, not necessarily a terminal result.
+ * Board and context share effective states; only succeeded/cancelled close.
  */
 export function readBoard(root, config = {}) {
   const absolute = resolve(root);
   const dir = resolve(config.dataRoot || join(absolute, '.dsh-dev'));
   const completions = lines(join(dir, 'completions.jsonl'));
-  const completionByTask = new Map();
-  for (const completion of completions) {
-    if (typeof completion?.taskId === 'string') completionByTask.set(completion.taskId, completion);
-  }
 
   // One board for a 2-task project and one for a 200-request project cannot both
   // be "return every record": the second would ship megabytes to the browser and
@@ -177,9 +191,7 @@ export function readBoard(root, config = {}) {
     .sort(newestFirst);
   const openRequests = allRequests.filter((request) => !REQUEST_TERMINAL.has(request.status));
   const closedRequests = allRequests.filter((request) => REQUEST_TERMINAL.has(request.status));
-  const allTasks = latest(allLines(join(dir, 'tasks.jsonl')), 'taskId').map((record) => {
-    const completion = completionByTask.get(record.taskId);
-    const status = record.status ?? 'queued';
+  const allTasks = projectTasks(allLines(join(dir, 'tasks.jsonl')), completions).map((record) => {
     return {
       id: record.taskId,
       requestId: record.requestId ?? null,
@@ -189,9 +201,10 @@ export function readBoard(root, config = {}) {
       steps: record.steps ?? [],
       dependsOn: record.dependsOn ?? [],
       risk: record.risk ?? '',
-      status,
-      closed: status === 'succeeded' || status === 'cancelled' || completion !== undefined,
-      completionStatus: completion?.status ?? null,
+      status: record.status,
+      storedStatus: record.storedStatus,
+      closed: record.closed,
+      completionStatus: record.completionStatus,
       createdAt: record.createdAt ?? null,
       latestFeedback: feedbackFor(`task:${record.taskId}`),
     };
@@ -314,7 +327,9 @@ export function defineDevTools(ctx, config = {}) {
     }, async (args, exec) => {
       const p = project(exec); const limit = args?.limit ?? 10;
       const knowledge = latest(allRecords(ctx, config, exec, 'knowledge.jsonl'), 'knowledgeId').filter((x) => x.status === 'active' || x.status === 'proposed');
-      const tasks = latest(allRecords(ctx, config, exec, 'tasks.jsonl'), 'taskId').filter((x) => !['succeeded', 'cancelled'].includes(x.status));
+      // Filter completed outcomes BEFORE limiting the context window: newer
+      // completed tasks must not evict older work that is still actionable.
+      const tasks = projectTasks(lines(join(p.dir, 'tasks.jsonl')), lines(join(p.dir, 'completions.jsonl'))).filter((x) => !x.closed);
       const feedback = allRecords(ctx, config, exec, 'feedback.jsonl').slice(-limit);
       return { id: p.projectId, status: 'succeeded', projectId: p.projectId, context: { root: basename(p.root), knowledge: knowledge.slice(-limit), tasks: tasks.slice(-limit), feedback }, refs: { dataRoot: p.dir }, text: `项目 ${p.projectId}：${tasks.length} 个未完成任务，${knowledge.length} 条可引用知识。` };
     }),

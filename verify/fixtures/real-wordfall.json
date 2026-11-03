@@ -1,0 +1,38 @@
+{
+  "counts": {
+    "requests": 2,
+    "openRequests": 2,
+    "closedRequests": 0,
+    "tasks": 3,
+    "feedback": 1,
+    "verifications": 2,
+    "completions": 1,
+    "openTasks": 2,
+    "closedTasks": 1
+  },
+  "tasks": [
+    {
+      "id": "task_21b4a6a6622f",
+      "status": "queued",
+      "closed": false,
+      "completionStatus": null
+    },
+    {
+      "id": "task_a71ddfd580dc",
+      "status": "queued",
+      "closed": false,
+      "completionStatus": null
+    },
+    {
+      "id": "task_5172324c5adb",
+      "status": "queued",
+      "closed": true,
+      "completionStatus": "waiting-user"
+    }
+  ],
+  "contextUnfinished": [
+    "task_a71ddfd580dc",
+    "task_5172324c5adb",
+    "task_21b4a6a6622f"
+  ]
+}

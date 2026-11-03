@@ -1,0 +1,73 @@
+{
+  "counts": {
+    "requests": 2,
+    "openRequests": 2,
+    "closedRequests": 0,
+    "tasks": 8,
+    "feedback": 1,
+    "verifications": 8,
+    "completions": 4,
+    "openTasks": 4,
+    "closedTasks": 4
+  },
+  "tasks": [
+    {
+      "id": "task_f32259b24a37",
+      "status": "queued",
+      "closed": false,
+      "completionStatus": null
+    },
+    {
+      "id": "task_f61bb3e6dc9f",
+      "status": "queued",
+      "closed": false,
+      "completionStatus": null
+    },
+    {
+      "id": "task_d3ede796495c",
+      "status": "queued",
+      "closed": false,
+      "completionStatus": null
+    },
+    {
+      "id": "task_9f18d961b5be",
+      "status": "queued",
+      "closed": false,
+      "completionStatus": null
+    },
+    {
+      "id": "task_9d64494b4488",
+      "status": "queued",
+      "closed": true,
+      "completionStatus": "waiting-user"
+    },
+    {
+      "id": "task_333b33b563a2",
+      "status": "queued",
+      "closed": true,
+      "completionStatus": "waiting-user"
+    },
+    {
+      "id": "task_0b9db42b1412",
+      "status": "queued",
+      "closed": true,
+      "completionStatus": "waiting-user"
+    },
+    {
+      "id": "task_b42d39bb5ef0",
+      "status": "queued",
+      "closed": true,
+      "completionStatus": "waiting-user"
+    }
+  ],
+  "contextUnfinished": [
+    "task_b42d39bb5ef0",
+    "task_0b9db42b1412",
+    "task_333b33b563a2",
+    "task_9d64494b4488",
+    "task_9f18d961b5be",
+    "task_d3ede796495c",
+    "task_f61bb3e6dc9f",
+    "task_f32259b24a37"
+  ]
+}

@@ -13,7 +13,7 @@
   "repository": { "type": "git", "url": "git+https://github.com/yuna78/dsh-plugin-dev-workflow.git" },
   "bugs": { "url": "https://github.com/yuna78/dsh-plugin-dev-workflow/issues" },
   "icon": "assets/icon.svg",
-  "scripts": { "test": "node verify/smoke.mjs", "preview": "node verify/preview.mjs", "prepublishOnly": "node verify/smoke.mjs" },
+  "scripts": { "test": "node verify/smoke.mjs && node verify/status.mjs && node verify/context-status.mjs", "preview": "node verify/preview.mjs", "prepublishOnly": "npm test" },
   "exports": { ".": "./index.js", "./client": "./client.js", "./package.json": "./package.json" },
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
